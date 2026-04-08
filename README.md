@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🍚 오늘 뭐 먹지? — 한국 AI 식단 추천 앱
 
 Flutter + Node.js 백엔드로 구성된 한국 가정식 AI 식단 추천 앱입니다.
@@ -151,3 +152,7 @@ flutter build ios --release
 - **백엔드**: Node.js, Express, @anthropic-ai/sdk
 - **AI**: Claude claude-sonnet-4-20250514 (Anthropic)
 - **외부 연동**: url_launcher (쿠팡, 홈플러스 등 쇼핑몰)
+=======
+# Mom-s-Table
+Koreans' Daily Meals
+>>>>>>> c3628ada8505f46f69cc16674bfc0b6bf1e4a0a8
