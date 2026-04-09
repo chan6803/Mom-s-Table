@@ -1,6 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+app.use(cors({
+  origin: '*',  // 개발 중에만 사용, 실제 배포 시에는 특정 도메인으로 제한
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.options('*', cors());
+
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
