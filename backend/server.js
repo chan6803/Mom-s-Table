@@ -1,24 +1,24 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-app.use(cors({
-  origin: '*',  // 개발 중에만 사용, 실제 배포 시에는 특정 도메인으로 제한
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.options('*', cors());
-
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ API 키는 .env 파일에서 불러옵니다 (절대 코드에 직접 넣지 마세요)
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ✅ CORS 설정 (가장 먼저!)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.options('*', cors());
 
-app.use(cors());
+// ✅ JSON 파싱
 app.use(express.json());
+
+// ✅ API 키는 .env 파일에서 불러옵니다
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // 헬스 체크
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
