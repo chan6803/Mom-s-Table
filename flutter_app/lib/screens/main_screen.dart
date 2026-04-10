@@ -29,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🍚 오늘 뭐 먹지?'),
+        title: const Text('🍚 엄마의 밥상'),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 12),

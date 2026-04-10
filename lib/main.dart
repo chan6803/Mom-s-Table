@@ -35,7 +35,7 @@ class KoreanMealApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '오늘 뭐 먹지?',
+      title: '엄마의 밥상',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
