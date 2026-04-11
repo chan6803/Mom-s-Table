@@ -24,5 +24,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: NotoSansKR
+      fonts:
+        - asset: fonts/NotoSansKR-Regular.ttf
+        - asset: fonts/NotoSansKR-Bold.ttf
+          weight: 700
+        - asset: fonts/NotoSansKR-Light.ttf
+          weight: 300
   assets:
     - .env

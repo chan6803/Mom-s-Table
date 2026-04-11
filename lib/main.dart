@@ -69,3 +69,12 @@ class KoreanMealApp extends StatelessWidget {
     );
   }
 }
+
+MaterialApp(
+  title: 'Mom\'s Table',
+  theme: ThemeData(
+    fontFamily: 'NotoSansKR',  // 기본 폰트로 설정
+    // ... 나머지 테마 설정
+  ),
+  home: MyHomePage(),
+)
