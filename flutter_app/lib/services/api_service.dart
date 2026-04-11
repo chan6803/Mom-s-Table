@@ -5,7 +5,7 @@ import '../models/preferences_model.dart';
 
 class ApiService {
   // ✅ 배포 시 실제 서버 URL로 변경하세요
-  static const String baseUrl = 'https://meal-rose.vercel.app:3000';
+  static const String baseUrl = 'https://localhost:3000';
 
   // 식단 추천 (AI)
   static Future<List<MealItem>> recommendMeal({
