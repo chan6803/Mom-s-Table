@@ -25,13 +25,22 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
   fonts:
     - family: NotoSansKR
       fonts:
         - asset: fonts/NotoSansKR-Regular.ttf
         - asset: fonts/NotoSansKR-Bold.ttf
           weight: 700
-        - asset: fonts/NotoSansKR-Light.ttf
+    
+    - family: NanumSquare
+      fonts:
+        - asset: fonts/NanumSquare_acR.ttf
+        - asset: fonts/NanumSquare_acL.ttf
           weight: 300
+        - asset: fonts/NanumSquareB.ttf
+          weight: 700
+        - asset: fonts/NanumSquareEB.ttf
+          weight: 900
   assets:
     - .env
