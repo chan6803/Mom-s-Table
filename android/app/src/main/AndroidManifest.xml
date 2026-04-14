@@ -1,15 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- ✅ 인터넷 권한 (AI API 호출에 필수) -->
+    <!-- 인터넷 권한 (AI API 호출에 필수) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="엄마의 밥상"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
-        <!-- android:usesCleartextTraffic="true" : http:// 주소 허용 (로컬 테스트용) -->
-        <!-- ⚠️ 배포 시에는 https 백엔드를 쓰고 이 옵션을 false로 변경하세요 -->
+        android:usesCleartextTraffic="false">
+        <!-- Railway는 https:// 를 사용하므로 cleartext 불필요 -->
 
         <activity
             android:name=".MainActivity"
@@ -32,12 +31,12 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
         </intent>
-        <!-- url_launcher 패키지를 위한 쿼리 -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />

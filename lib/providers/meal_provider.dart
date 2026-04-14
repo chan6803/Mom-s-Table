@@ -12,12 +12,14 @@ class MealProvider extends ChangeNotifier {
   bool _loadingBreakfast = false;
   bool _loadingLunch = false;
   bool _loadingDinner = false;
+  String? _lastError;
 
   DayMeal get dayMeal => _dayMeal;
   UserPreferences get prefs => _prefs;
   bool get loadingBreakfast => _loadingBreakfast;
   bool get loadingLunch => _loadingLunch;
   bool get loadingDinner => _loadingDinner;
+  String? get lastError => _lastError;
 
   MealProvider() {
     _dayMeal = DefaultMealData.defaultDay();
@@ -40,45 +42,70 @@ class MealProvider extends ChangeNotifier {
 
   List<MealItem> getMeal(String type) {
     switch (type) {
-      case 'breakfast': return _dayMeal.breakfast;
-      case 'lunch': return _dayMeal.lunch;
-      case 'dinner': return _dayMeal.dinner;
-      default: return [];
+      case 'breakfast':
+        return _dayMeal.breakfast;
+      case 'lunch':
+        return _dayMeal.lunch;
+      case 'dinner':
+        return _dayMeal.dinner;
+      default:
+        return [];
     }
   }
 
   bool isLoading(String type) {
     switch (type) {
-      case 'breakfast': return _loadingBreakfast;
-      case 'lunch': return _loadingLunch;
-      case 'dinner': return _loadingDinner;
-      default: return false;
+      case 'breakfast':
+        return _loadingBreakfast;
+      case 'lunch':
+        return _loadingLunch;
+      case 'dinner':
+        return _loadingDinner;
+      default:
+        return false;
     }
   }
 
   void _setLoading(String type, bool val) {
     switch (type) {
-      case 'breakfast': _loadingBreakfast = val; break;
-      case 'lunch': _loadingLunch = val; break;
-      case 'dinner': _loadingDinner = val; break;
+      case 'breakfast':
+        _loadingBreakfast = val;
+        break;
+      case 'lunch':
+        _loadingLunch = val;
+        break;
+      case 'dinner':
+        _loadingDinner = val;
+        break;
     }
     notifyListeners();
   }
 
-  Future<void> refreshMeal(String type) async {
+  Future<bool> refreshMeal(String type) async {
+    _lastError = null;
     _setLoading(type, true);
+    bool success = false;
     try {
-      final items = await ApiService.recommendMeal(mealType: type, prefs: _prefs);
+      final items =
+          await ApiService.recommendMeal(mealType: type, prefs: _prefs);
       switch (type) {
-        case 'breakfast': _dayMeal.breakfast = items; break;
-        case 'lunch': _dayMeal.lunch = items; break;
-        case 'dinner': _dayMeal.dinner = items; break;
+        case 'breakfast':
+          _dayMeal.breakfast = items;
+          break;
+        case 'lunch':
+          _dayMeal.lunch = items;
+          break;
+        case 'dinner':
+          _dayMeal.dinner = items;
+          break;
       }
+      success = true;
     } catch (e) {
-      // 실패 시 기본 데이터 유지
       debugPrint('식단 추천 오류: $e');
+      _lastError = e.toString();
     }
     _setLoading(type, false);
+    return success;
   }
 
   void recordPick(String name) {
@@ -122,7 +149,11 @@ class MealProvider extends ChangeNotifier {
   }
 
   int get totalKcal {
-    final all = [..._dayMeal.breakfast, ..._dayMeal.lunch, ..._dayMeal.dinner];
+    final all = [
+      ..._dayMeal.breakfast,
+      ..._dayMeal.lunch,
+      ..._dayMeal.dinner,
+    ];
     return all.fold(0, (s, i) => s + i.kcal);
   }
 }

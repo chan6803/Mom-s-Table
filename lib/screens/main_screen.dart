@@ -22,10 +22,18 @@ class _MainScreenState extends State<MainScreen> {
     ChatScreen(),
   ];
 
+  // 요일 한국어 변환
+  String _weekdayKor(int weekday) {
+    const days = ['월', '화', '수', '목', '금', '토', '일'];
+    return days[weekday - 1];
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final dateStr = DateFormat('M월 d일').format(now);
+    // X월 X일(X요일) 형식
+    final dateStr =
+        '${DateFormat('M월 d일').format(now)}(${_weekdayKor(now.weekday)})';
 
     return Scaffold(
       appBar: AppBar(
@@ -57,10 +65,26 @@ class _MainScreenState extends State<MainScreen> {
         indicatorColor: const Color(0xFFE6F1FB),
         surfaceTintColor: Colors.transparent,
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: '식단'),
-          NavigationDestination(icon: Icon(Icons.star_outline), selectedIcon: Icon(Icons.star), label: '취향'),
-          NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: '장보기'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'AI 추천'),
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: '식단',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.star_outline),
+            selectedIcon: Icon(Icons.star),
+            label: '취향',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart),
+            label: '장보기',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'AI 추천',
+          ),
         ],
       ),
     );
