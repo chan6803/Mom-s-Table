@@ -56,6 +56,22 @@ app.use(express.json());
 // 헬스 체크
 app.get('/health', (req, res) => res.json({ status: 'ok', provider: AI_PROVIDER }));
 
+// ✅ 이 줄 추가 — 브라우저로 루트 접속 시 상태 페이지 표시
+app.get('/', (req, res) => {
+  res.send(`
+    <h2>🍚 엄마의 밥상 API 서버</h2>
+    <p>✅ 서버 정상 실행 중</p>
+    <p>AI 제공자: <b>${AI_PROVIDER}</b></p>
+    <p>사용 가능한 API:</p>
+    <ul>
+      <li>GET /health</li>
+      <li>POST /api/recommend</li>
+      <li>POST /api/chat</li>
+      <li>POST /api/personalized</li>
+    </ul>
+  `);
+});
+
 // ─────────────────────────────────────────
 // 1. 식단 추천 API
 // ─────────────────────────────────────────
