@@ -81,31 +81,67 @@ class MealProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 아침·점심·저녁을 한번에 추천받아 중복을 원천 차단
+  // 아침→점심→저녁 순서로 순차 호출, 앞 끼니 메뉴를 다음 끼니에서 제외
+  // 서버의 기존 /api/recommend 엔드포인트를 그대로 활용 (안정적)
   Future<bool> refreshMeal(String type) async {
     _lastError = null;
-    // 3끼 모두 로딩 표시
-    _loadingBreakfast = true;
-    _loadingLunch = true;
-    _loadingDinner = true;
-    notifyListeners();
-
     bool success = false;
+
     try {
-      final result = await ApiService.recommendDay(prefs: _prefs);
-      _dayMeal.breakfast = result['breakfast'] ?? _dayMeal.breakfast;
-      _dayMeal.lunch     = result['lunch']     ?? _dayMeal.lunch;
-      _dayMeal.dinner    = result['dinner']    ?? _dayMeal.dinner;
+      // ── Step 1: 아침 추천 ──────────────────────────
+      _loadingBreakfast = true;
+      notifyListeners();
+
+      final breakfastItems = await ApiService.recommendMeal(
+        mealType: 'breakfast',
+        prefs: _prefs,
+        excludeMenus: [],
+      );
+      _dayMeal.breakfast = breakfastItems;
+      _loadingBreakfast = false;
+      notifyListeners();
+
+      // ── Step 2: 점심 추천 (아침 메뉴 제외) ───────────
+      _loadingLunch = true;
+      notifyListeners();
+
+      final excludeForLunch = breakfastItems.map((m) => m.name).toList();
+      final lunchItems = await ApiService.recommendMeal(
+        mealType: 'lunch',
+        prefs: _prefs,
+        excludeMenus: excludeForLunch,
+      );
+      _dayMeal.lunch = lunchItems;
+      _loadingLunch = false;
+      notifyListeners();
+
+      // ── Step 3: 저녁 추천 (아침+점심 메뉴 제외) ──────
+      _loadingDinner = true;
+      notifyListeners();
+
+      final excludeForDinner = [
+        ...breakfastItems.map((m) => m.name),
+        ...lunchItems.map((m) => m.name),
+      ];
+      final dinnerItems = await ApiService.recommendMeal(
+        mealType: 'dinner',
+        prefs: _prefs,
+        excludeMenus: excludeForDinner,
+      );
+      _dayMeal.dinner = dinnerItems;
+      _loadingDinner = false;
+      notifyListeners();
+
       success = true;
     } catch (e) {
       debugPrint('식단 추천 오류: $e');
       _lastError = e.toString();
+      _loadingBreakfast = false;
+      _loadingLunch = false;
+      _loadingDinner = false;
+      notifyListeners();
     }
 
-    _loadingBreakfast = false;
-    _loadingLunch = false;
-    _loadingDinner = false;
-    notifyListeners();
     return success;
   }
 
