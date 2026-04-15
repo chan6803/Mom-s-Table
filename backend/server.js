@@ -136,40 +136,43 @@ ${disStr} ${likeStr} ${topStr} ${exclStr}
 app.post('/api/recommend-day', async (req, res) => {
   const { likedMenus = [], dislikedMenus = [], topPicked = [] } = req.body;
 
-  const disStr = dislikedMenus.length > 0 ? `다음은 모든 끼니에서 절대 제외: ${dislikedMenus.join(', ')}.` : '';
-  const likeStr = likedMenus.length > 0 ? `가능하면 이런 스타일 포함: ${likedMenus.join(', ')}.` : '';
-  const topStr = topPicked.length > 0 ? `자주 선택한 메뉴 참고: ${topPicked.join(', ')}.` : '';
+  const disStr = dislikedMenus.length > 0
+    ? '절대 제외 메뉴: ' + dislikedMenus.join(', ') + '.'
+    : '';
+  const likeStr = likedMenus.length > 0
+    ? '선호 스타일: ' + likedMenus.join(', ') + '.'
+    : '';
+  const topStr = topPicked.length > 0
+    ? '자주 먹는 메뉴 참고: ' + topPicked.join(', ') + '.'
+    : '';
 
-  const prompt = `한국 가정식 1인분 기준으로 오늘 하루 아침·점심·저녁 식단을 한번에 추천해줘.
-${disStr} ${likeStr} ${topStr}
-[중요] 아침·점심·저녁에 같은 메뉴가 절대 중복되면 안 돼. 완전히 다른 메뉴로 구성해줘.
-아침: 가볍고 영양 있는 한국식 아침 (죽, 토스트류도 가능)
-점심: 든든한 한식 (밥+국+반찬)
-저녁: 균형 잡힌 저녁 (밥+찌개+반찬)
-각 끼니는 밥 또는 주식 1가지 + 국/찌개 1가지 + 반찬 2가지 이상으로 구성해줘.
-반드시 아래 JSON 형식만 출력해. 다른 말은 절대 쓰지 마.
-{
-  "breakfast": [
-    {
-      "name": "메뉴명",
-      "type": "주식|국|찌개|반찬|분식 중 하나",
-      "kcal": 숫자,
-      "dot": "dot-main|dot-soup|dot-side|dot-noodle 중 하나",
-      "ingredients": ["재료1 양", "재료2 양"],
-      "steps": ["1단계", "2단계"]
-    }
-  ],
-  "lunch": [ ... ],
-  "dinner": [ ... ]
-}`;
+  const schema = '{"name":"메뉴명","type":"주식또는국또는찌개또는반찬","kcal":숫자,"dot":"dot-main또는dot-soup또는dot-side또는dot-noodle","ingredients":["재료1 양"],"steps":["조리법"]}';
+
+  const prompt = '당신은 한국 가정식 전문 영양사입니다.\n'
+    + '오늘 하루 아침/점심/저녁 3끼를 동시에 계획해서 추천해주세요.\n'
+    + disStr + ' ' + likeStr + ' ' + topStr + '\n\n'
+    + '규칙:\n'
+    + '1. 아침/점심/저녁에 동일한 메뉴명이 절대 겹치면 안 됩니다\n'
+    + '2. 아침은 가볍게(죽,계란,토스트도 가능), 점심은 든든하게, 저녁은 균형있게\n'
+    + '3. 각 끼니: 주식 1개 + 국/찌개 1개 + 반찬 2개 이상 (총 4~5개)\n'
+    + '4. 반드시 아래 JSON만 출력하고 설명은 절대 쓰지 마세요\n\n'
+    + '출력 형식 (이 구조 그대로):\n'
+    + '{"breakfast":[' + schema + ',' + schema + ',' + schema + ',' + schema + '],'
+    + '"lunch":[' + schema + ',' + schema + ',' + schema + ',' + schema + '],'
+    + '"dinner":[' + schema + ',' + schema + ',' + schema + ',' + schema + ']}';
 
   try {
     const text = await callAI({
       messages: [{ role: 'user', content: prompt }],
-      maxTokens: 3000,
+      maxTokens: 2500,
     });
     const cleaned = text.replace(/```json|```/g, '').trim();
-    const day = JSON.parse(cleaned);
+    const jsonStart = cleaned.indexOf('{');
+    const jsonEnd = cleaned.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error('AI가 JSON을 반환하지 않았습니다: ' + cleaned.slice(0, 100));
+    }
+    const day = JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
     res.json({
       breakfast: day.breakfast || [],
       lunch: day.lunch || [],
@@ -180,7 +183,6 @@ ${disStr} ${likeStr} ${topStr}
     res.status(500).json({ error: '하루 식단 추천 실패', detail: err.message });
   }
 });
-
 // ─────────────────────────────────────────
 // 2. AI 채팅 API
 // ─────────────────────────────────────────
