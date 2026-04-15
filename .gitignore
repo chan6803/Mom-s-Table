@@ -1,5 +1,28 @@
-Baby-Milestone-Tracker.zip
+# ── Flutter 빌드 결과물 ──────────────────
 build/
 *.so
-build/
-*.so
+
+# ── Flutter 내부 도구 캐시 ──────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# ── IDE 설정 파일 (개인 환경마다 다르므로 제외) ──
+.idea/
+*.iml
+.vscode/
+
+# ── 안드로이드 빌드/캐시 ──────────────────
+android/.gradle/
+android/.kotlin/
+android/local.properties
+
+# ── 환경변수 (API 키 등 민감정보) ──────────
+.env
+backend/.env
+*.env
+
+# ── 기타 ──────────────────────────────────
+*.zip
+*.log

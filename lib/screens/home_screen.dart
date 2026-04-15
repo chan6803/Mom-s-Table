@@ -92,8 +92,7 @@ class _MealSection extends StatelessWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: const Text(
-                                        '😅 서버가 잠자고 있었어요!
-잠시 후 다시 눌러보세요. (15~30초 후)',
+                                        '😅 서버가 잠자고 있었어요! 잠시 후 다시 눌러보세요.',
                                         style: TextStyle(fontSize: 13, height: 1.5),
                                       ),
                                       duration: const Duration(seconds: 5),

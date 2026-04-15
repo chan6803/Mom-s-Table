@@ -88,28 +88,52 @@ app.post('/api/recommend', async (req, res) => {
   const { mealType, likedMenus = [], dislikedMenus = [], topPicked = [], excludeMenus = [] } = req.body;
 
   const label = mealType === 'breakfast' ? '아침' : mealType === 'lunch' ? '점심' : '저녁';
-  const disStr = dislikedMenus.length > 0 ? `다음은 절대 제외: ${dislikedMenus.join(', ')}.` : '';
-  const likeStr = likedMenus.length > 0 ? `가능하면 이런 스타일 포함: ${likedMenus.join(', ')}.` : '';
-  const topStr = topPicked.length > 0 ? `자주 선택한 메뉴 참고: ${topPicked.join(', ')}.` : '';
+
+  // 매번 다른 메뉴가 나오도록 랜덤 키워드 삽입
+  const breakfastVariety = [
+    '달걀말이와 북어국', '잡곡밥과 순두부찌개', '볶음밥과 콩나물국',
+    '토스트와 미소국', '오트밀죽과 나물', '현미밥과 된장국',
+    '계란덮밥과 맑은국', '비빔밥과 미역국', '국수와 달걀국',
+  ];
+  const lunchVariety = [
+    '제육볶음과 된장찌개', '불고기와 시금치국', '닭볶음탕과 오이무침',
+    '순두부찌개와 잡채', '김치볶음밥과 계란국', '비빔밥과 북어국',
+    '갈비탕과 깍두기', '된장찌개와 고등어구이', '물냉면과 보쌈',
+    '짜글이와 잡곡밥', '닭갈비와 콩나물국', '갈치조림과 뭇국',
+  ];
+  const dinnerVariety = [
+    '삼겹살구이와 된장찌개', '낙지볶음과 맑은국', '갈비찜과 시래기국',
+    '생선구이와 콩나물국', '소불고기와 두부찌개', '닭백숙과 깍두기',
+    '오삼불고기와 미역국', '청국장과 고등어구이', '수육과 돼지국밥',
+    '해물순두부와 잡곡밥', '제육덮밥과 북어국', '삼치구이와 된장국',
+  ];
+  const varietyPool = mealType === 'breakfast' ? breakfastVariety
+    : mealType === 'lunch' ? lunchVariety : dinnerVariety;
+  const randomHint = varietyPool[Math.floor(Math.random() * varietyPool.length)];
+
+  const disStr = dislikedMenus.length > 0
+    ? '⛔ 다음 메뉴는 무조건 제외(이유 불문): ' + dislikedMenus.join(', ') + '.'
+    : '';
+  const likeStr = likedMenus.length > 0
+    ? '✅ 선호 스타일 반영: ' + likedMenus.join(', ') + '.'
+    : '';
   const exclStr = excludeMenus.length > 0
-    ? `[중복 금지] 오늘 다른 끼니에 이미 나온 메뉴이므로 절대 포함하지 마: ${excludeMenus.join(', ')}.`
+    ? '🚫 오늘 다른 끼니에 이미 나온 메뉴라 절대 중복 불가: ' + excludeMenus.join(', ') + '.'
     : '';
 
-  const prompt = `한국 가정식 1인분 ${label} 식단을 추천해줘.
-${disStr} ${likeStr} ${topStr} ${exclStr}
-아침·점심·저녁이 겹치지 않도록 ${label}에 어울리는 메뉴로만 구성해줘.
-밥 또는 분식 1가지 + 국 또는 찌개 1가지 + 반찬 3가지 이상으로 구성해줘.
-반드시 아래 JSON 배열 형식만 출력해. 다른 말은 절대 쓰지 마.
-[
-  {
-    "name": "메뉴명",
-    "type": "주식|국|찌개|반찬|분식 중 하나",
-    "kcal": 숫자,
-    "dot": "dot-main|dot-soup|dot-side|dot-noodle 중 하나",
-    "ingredients": ["재료1 양", "재료2 양"],
-    "steps": ["1단계", "2단계", "3단계"]
-  }
-]`;
+  const prompt = '당신은 매일 다양한 한국 가정식을 추천하는 영양사입니다.\n'
+    + '오늘 ' + label + ' 식단을 추천해 주세요.\n\n'
+    + (disStr ? disStr + '\n' : '')
+    + (likeStr ? likeStr + '\n' : '')
+    + (exclStr ? exclStr + '\n' : '')
+    + '오늘의 추천 힌트: ' + randomHint + ' 스타일 참고 (비슷하거나 다른 메뉴도 가능)\n\n'
+    + '규칙:\n'
+    + '1. 주식(밥/죽/면) 1개 + 국/찌개 1개 + 반찬 3개 이상\n'
+    + '2. 위의 제외 목록 메뉴는 절대 포함하지 마세요\n'
+    + '3. 공깃밥+미역국+두부조림+콩나물무침+시금치나물 조합은 절대 금지\n'
+    + '4. 매번 신선하고 다양한 조합을 추천하세요\n\n'
+    + '반드시 JSON 배열만 출력하고 설명은 쓰지 마세요:\n'
+    + '[{"name":"메뉴명","type":"주식또는국또는찌개또는반찬또는분식","kcal":숫자,"dot":"dot-main또는dot-soup또는dot-side또는dot-noodle","ingredients":["재료1 양"],"steps":["조리법1","조리법2"]}]';
 
   try {
     const text = await callAI({
@@ -117,7 +141,12 @@ ${disStr} ${likeStr} ${topStr} ${exclStr}
       maxTokens: 1500,
     });
     const cleaned = text.replace(/```json|```/g, '').trim();
-    const meals = JSON.parse(cleaned);
+    const jsonStart = cleaned.indexOf('[');
+    const jsonEnd = cleaned.lastIndexOf(']');
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error('JSON 배열을 찾을 수 없음: ' + cleaned.slice(0, 80));
+    }
+    const meals = JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
     res.json({ meals });
   } catch (err) {
     console.error('recommend error:', err.message);

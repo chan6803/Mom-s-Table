@@ -37,8 +37,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         SnackBar(
           content: Text(
             e.toString().contains('시간 초과') || e.toString().contains('timeout')
-              ? '😅 서버가 잠자고 있었어요!
-잠시 후 다시 눌러보세요. (15~30초 후)'
+              ? '😅 서버가 잠자고 있었어요! 잠시 후 다시 눌러보세요.'
               : e.toString().contains('인터넷')
                 ? '📶 인터넷 연결을 확인해 주세요.'
                 : '추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',

@@ -8,8 +8,7 @@ plugins {
 android {
     namespace = "com.mealapp.korean_meal_planner"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "26.1.10909125"
-//    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
