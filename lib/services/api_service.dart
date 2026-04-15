@@ -50,8 +50,7 @@ class ApiService {
     } on Exception catch (e) {
       final msg = e.toString();
       if (msg.contains('TimeoutException') || msg.contains('timeout')) {
-        throw Exception('서버 응답 시간 초과
-잠시 후 다시 눌러보세요.');
+        throw Exception('서버 응답 시간 초과. 잠시 후 다시 눌러보세요.');
       }
       if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
         throw Exception('인터넷 연결을 확인해 주세요.');
