@@ -86,8 +86,23 @@ class MealProvider extends ChangeNotifier {
     _setLoading(type, true);
     bool success = false;
     try {
-      final items =
-          await ApiService.recommendMeal(mealType: type, prefs: _prefs);
+      // 다른 끼니에 이미 추천된 메뉴 이름을 수집해서 중복 제외 요청
+      final excludeMenus = <String>[];
+      if (type != 'breakfast') {
+        excludeMenus.addAll(_dayMeal.breakfast.map((m) => m.name));
+      }
+      if (type != 'lunch') {
+        excludeMenus.addAll(_dayMeal.lunch.map((m) => m.name));
+      }
+      if (type != 'dinner') {
+        excludeMenus.addAll(_dayMeal.dinner.map((m) => m.name));
+      }
+
+      final items = await ApiService.recommendMeal(
+        mealType: type,
+        prefs: _prefs,
+        excludeMenus: excludeMenus,
+      );
       switch (type) {
         case 'breakfast':
           _dayMeal.breakfast = items;

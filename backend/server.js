@@ -54,7 +54,16 @@ app.use(cors());
 app.use(express.json());
 
 // 헬스 체크
-app.get('/health', (req, res) => res.json({ status: 'ok', provider: AI_PROVIDER }));
+app.get('/health', (req, res) => {
+  const hasKey = AI_PROVIDER === 'anthropic'
+    ? !!process.env.ANTHROPIC_API_KEY
+    : !!process.env.DEEPSEEK_API_KEY;
+  res.json({
+    status: 'ok',
+    provider: AI_PROVIDER,
+    apiKeySet: hasKey,
+  });
+});
 
 // ✅ 이 줄 추가 — 브라우저로 루트 접속 시 상태 페이지 표시
 app.get('/', (req, res) => {
@@ -76,15 +85,19 @@ app.get('/', (req, res) => {
 // 1. 식단 추천 API
 // ─────────────────────────────────────────
 app.post('/api/recommend', async (req, res) => {
-  const { mealType, likedMenus = [], dislikedMenus = [], topPicked = [] } = req.body;
+  const { mealType, likedMenus = [], dislikedMenus = [], topPicked = [], excludeMenus = [] } = req.body;
 
   const label = mealType === 'breakfast' ? '아침' : mealType === 'lunch' ? '점심' : '저녁';
   const disStr = dislikedMenus.length > 0 ? `다음은 절대 제외: ${dislikedMenus.join(', ')}.` : '';
   const likeStr = likedMenus.length > 0 ? `가능하면 이런 스타일 포함: ${likedMenus.join(', ')}.` : '';
   const topStr = topPicked.length > 0 ? `자주 선택한 메뉴 참고: ${topPicked.join(', ')}.` : '';
+  const exclStr = excludeMenus.length > 0
+    ? `[중복 금지] 오늘 다른 끼니에 이미 나온 메뉴이므로 절대 포함하지 마: ${excludeMenus.join(', ')}.`
+    : '';
 
   const prompt = `한국 가정식 1인분 ${label} 식단을 추천해줘.
-${disStr} ${likeStr} ${topStr}
+${disStr} ${likeStr} ${topStr} ${exclStr}
+아침·점심·저녁이 겹치지 않도록 ${label}에 어울리는 메뉴로만 구성해줘.
 밥 또는 분식 1가지 + 국 또는 찌개 1가지 + 반찬 3가지 이상으로 구성해줘.
 반드시 아래 JSON 배열 형식만 출력해. 다른 말은 절대 쓰지 마.
 [
@@ -108,7 +121,11 @@ ${disStr} ${likeStr} ${topStr}
     res.json({ meals });
   } catch (err) {
     console.error('recommend error:', err.message);
-    res.status(500).json({ error: '식단 추천 실패', detail: err.message });
+    const isAuthError = err.message && (err.message.includes('401') || err.message.includes('Authentication') || err.message.includes('API key'));
+    res.status(500).json({
+      error: isAuthError ? 'API 키 오류 - Railway Variables를 확인하세요' : '식단 추천 실패',
+      detail: err.message
+    });
   }
 });
 

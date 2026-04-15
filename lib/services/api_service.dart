@@ -22,6 +22,7 @@ class ApiService {
   static Future<List<MealItem>> recommendMeal({
     required String mealType,
     required UserPreferences prefs,
+    List<String> excludeMenus = const [],
   }) async {
     try {
       final response = await http
@@ -33,6 +34,7 @@ class ApiService {
               'likedMenus': prefs.likedMenus,
               'dislikedMenus': prefs.dislikedMenus,
               'topPicked': prefs.topPicked.map((e) => e.key).toList(),
+              'excludeMenus': excludeMenus,
             }),
           )
           .timeout(const Duration(seconds: 60));
