@@ -34,7 +34,19 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('추천을 불러오지 못했어요. 서버 연결을 확인해 주세요.')));
+        SnackBar(
+          content: Text(
+            e.toString().contains('시간 초과') || e.toString().contains('timeout')
+              ? '😅 서버가 잠자고 있었어요!
+잠시 후 다시 눌러보세요. (15~30초 후)'
+              : e.toString().contains('인터넷')
+                ? '📶 인터넷 연결을 확인해 주세요.'
+                : '추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+            style: const TextStyle(fontSize: 13, height: 1.5),
+          ),
+          duration: const Duration(seconds: 5),
+          backgroundColor: const Color(0xFF333333),
+        ));
     }
     setState(() => _loading = false);
   }

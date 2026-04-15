@@ -4,8 +4,19 @@ import '../models/meal_model.dart';
 import '../models/preferences_model.dart';
 
 class ApiService {
-  // ✅ Railway 배포 서버 URL (https:// 반드시 포함!)
+  // ✅ Railway 배포 서버 URL
   static const String baseUrl = 'https://mom-s-table-production.up.railway.app';
+
+  // Railway 서버 워밍업 (잠자기 상태 깨우기)
+  // 앱 시작 시 한 번 호출하면 서버를 미리 깨워둘 수 있어요
+  static Future<void> wakeUpServer() async {
+    try {
+      await http.get(Uri.parse('$baseUrl/health'))
+          .timeout(const Duration(seconds: 30));
+    } catch (_) {
+      // 실패해도 무시 (백그라운드 워밍업이므로)
+    }
+  }
 
   // 식단 추천 (AI)
   static Future<List<MealItem>> recommendMeal({
@@ -31,8 +42,15 @@ class ApiService {
         final List items = data['meals'];
         return items.map((e) => MealItem.fromJson(e)).toList();
       }
-      throw Exception('식단 추천 실패: ${response.statusCode}');
-    } catch (e) {
+      throw Exception('식단 추천 실패 (서버 오류 ${response.statusCode})');
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('TimeoutException') || msg.contains('timeout')) {
+        throw Exception('서버 응답 시간 초과\n서버가 막 켜지는 중일 수 있어요. 15~30초 후 다시 눌러보세요.');
+      }
+      if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+        throw Exception('인터넷 연결을 확인해 주세요.');
+      }
       rethrow;
     }
   }
@@ -61,8 +79,15 @@ class ApiService {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         return data['reply'] ?? '';
       }
-      throw Exception('채팅 실패: ${response.statusCode}');
-    } catch (e) {
+      throw Exception('채팅 실패 (서버 오류 ${response.statusCode})');
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('TimeoutException') || msg.contains('timeout')) {
+        throw Exception('서버 응답 시간 초과\n잠시 후 다시 시도해 주세요.');
+      }
+      if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+        throw Exception('인터넷 연결을 확인해 주세요.');
+      }
       rethrow;
     }
   }
@@ -86,8 +111,15 @@ class ApiService {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         return data['reply'] ?? '';
       }
-      throw Exception('맞춤 추천 실패: ${response.statusCode}');
-    } catch (e) {
+      throw Exception('맞춤 추천 실패 (서버 오류 ${response.statusCode})');
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('TimeoutException') || msg.contains('timeout')) {
+        throw Exception('서버 응답 시간 초과\n서버가 막 켜지는 중일 수 있어요. 잠시 후 다시 눌러보세요.');
+      }
+      if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+        throw Exception('인터넷 연결을 확인해 주세요.');
+      }
       rethrow;
     }
   }

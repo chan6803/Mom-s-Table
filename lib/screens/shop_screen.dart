@@ -17,7 +17,11 @@ class ShopScreen extends StatelessWidget {
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // 브라우저를 열 수 없는 경우 무시
+    }
   }
 
   Set<String> _extractIngredients(MealProvider provider) {
@@ -61,8 +65,9 @@ class ShopScreen extends StatelessWidget {
               childAspectRatio: 2.2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              children: _stores.map((s) => GestureDetector(
+              children: _stores.map((s) => InkWell(
                 onTap: () => _launch('${s['url']}식재료'),
+                borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
@@ -136,18 +141,26 @@ class _IngredientRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(name, style: const TextStyle(fontSize: 13))),
-          GestureDetector(
+          InkWell(
             onTap: () => onLaunch('https://www.coupang.com/np/search?q=$q'),
-            child: const Text('쿠팡',
-              style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
-                decoration: TextDecoration.underline)),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: const Text('쿠팡',
+                style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
+                  decoration: TextDecoration.underline)),
+            ),
           ),
-          const SizedBox(width: 10),
-          GestureDetector(
+          const SizedBox(width: 4),
+          InkWell(
             onTap: () => onLaunch('https://www.homeplus.co.kr/search?q=$q'),
-            child: const Text('홈플러스',
-              style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
-                decoration: TextDecoration.underline)),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: const Text('홈플러스',
+                style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
+                  decoration: TextDecoration.underline)),
+            ),
           ),
         ],
       ),

@@ -86,7 +86,27 @@ class _MealSection extends StatelessWidget {
                               child: SizedBox(width: 16, height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2))))
                           : GestureDetector(
-                              onTap: () => provider.refreshMeal(type),
+                              onTap: () async {
+                                final success = await provider.refreshMeal(type);
+                                if (!success && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                        '😅 서버가 잠자고 있었어요!
+잠시 후 다시 눌러보세요. (15~30초 후)',
+                                        style: TextStyle(fontSize: 13, height: 1.5),
+                                      ),
+                                      duration: const Duration(seconds: 5),
+                                      backgroundColor: const Color(0xFF333333),
+                                      action: SnackBarAction(
+                                        label: '다시 시도',
+                                        textColor: const Color(0xFF7BBCFF),
+                                        onPressed: () => provider.refreshMeal(type),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                                 decoration: BoxDecoration(
