@@ -18,6 +18,48 @@ class ApiService {
     }
   }
 
+  // 하루 3끼 한번에 추천 (중복 방지용 핵심 함수)
+  static Future<Map<String, List<MealItem>>> recommendDay({
+    required UserPreferences prefs,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/api/recommend-day'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'likedMenus': prefs.likedMenus,
+              'dislikedMenus': prefs.dislikedMenus,
+              'topPicked': prefs.topPicked.map((e) => e.key).toList(),
+            }),
+          )
+          .timeout(const Duration(seconds: 90)); // 3끼 한번에라 시간 넉넉히
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return {
+          'breakfast': (data['breakfast'] as List)
+              .map((e) => MealItem.fromJson(e)).toList(),
+          'lunch': (data['lunch'] as List)
+              .map((e) => MealItem.fromJson(e)).toList(),
+          'dinner': (data['dinner'] as List)
+              .map((e) => MealItem.fromJson(e)).toList(),
+        };
+      }
+      throw Exception('하루 식단 추천 실패 (서버 오류 ${response.statusCode})');
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('TimeoutException') || msg.contains('timeout')) {
+        throw Exception('서버 응답 시간 초과
+잠시 후 다시 눌러보세요.');
+      }
+      if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+        throw Exception('인터넷 연결을 확인해 주세요.');
+      }
+      rethrow;
+    }
+  }
+
   // 식단 추천 (AI)
   static Future<List<MealItem>> recommendMeal({
     required String mealType,

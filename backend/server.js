@@ -129,6 +129,58 @@ ${disStr} ${likeStr} ${topStr} ${exclStr}
   }
 });
 
+
+// ─────────────────────────────────────────
+// 1-b. 하루 3끼 한번에 추천 API (중복 방지 핵심)
+// ─────────────────────────────────────────
+app.post('/api/recommend-day', async (req, res) => {
+  const { likedMenus = [], dislikedMenus = [], topPicked = [] } = req.body;
+
+  const disStr = dislikedMenus.length > 0 ? `다음은 모든 끼니에서 절대 제외: ${dislikedMenus.join(', ')}.` : '';
+  const likeStr = likedMenus.length > 0 ? `가능하면 이런 스타일 포함: ${likedMenus.join(', ')}.` : '';
+  const topStr = topPicked.length > 0 ? `자주 선택한 메뉴 참고: ${topPicked.join(', ')}.` : '';
+
+  const prompt = `한국 가정식 1인분 기준으로 오늘 하루 아침·점심·저녁 식단을 한번에 추천해줘.
+${disStr} ${likeStr} ${topStr}
+[중요] 아침·점심·저녁에 같은 메뉴가 절대 중복되면 안 돼. 완전히 다른 메뉴로 구성해줘.
+아침: 가볍고 영양 있는 한국식 아침 (죽, 토스트류도 가능)
+점심: 든든한 한식 (밥+국+반찬)
+저녁: 균형 잡힌 저녁 (밥+찌개+반찬)
+각 끼니는 밥 또는 주식 1가지 + 국/찌개 1가지 + 반찬 2가지 이상으로 구성해줘.
+반드시 아래 JSON 형식만 출력해. 다른 말은 절대 쓰지 마.
+{
+  "breakfast": [
+    {
+      "name": "메뉴명",
+      "type": "주식|국|찌개|반찬|분식 중 하나",
+      "kcal": 숫자,
+      "dot": "dot-main|dot-soup|dot-side|dot-noodle 중 하나",
+      "ingredients": ["재료1 양", "재료2 양"],
+      "steps": ["1단계", "2단계"]
+    }
+  ],
+  "lunch": [ ... ],
+  "dinner": [ ... ]
+}`;
+
+  try {
+    const text = await callAI({
+      messages: [{ role: 'user', content: prompt }],
+      maxTokens: 3000,
+    });
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    const day = JSON.parse(cleaned);
+    res.json({
+      breakfast: day.breakfast || [],
+      lunch: day.lunch || [],
+      dinner: day.dinner || [],
+    });
+  } catch (err) {
+    console.error('recommend-day error:', err.message);
+    res.status(500).json({ error: '하루 식단 추천 실패', detail: err.message });
+  }
+});
+
 // ─────────────────────────────────────────
 // 2. AI 채팅 API
 // ─────────────────────────────────────────

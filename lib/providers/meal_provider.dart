@@ -81,45 +81,31 @@ class MealProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 아침·점심·저녁을 한번에 추천받아 중복을 원천 차단
   Future<bool> refreshMeal(String type) async {
     _lastError = null;
-    _setLoading(type, true);
+    // 3끼 모두 로딩 표시
+    _loadingBreakfast = true;
+    _loadingLunch = true;
+    _loadingDinner = true;
+    notifyListeners();
+
     bool success = false;
     try {
-      // 다른 끼니에 이미 추천된 메뉴 이름을 수집해서 중복 제외 요청
-      final excludeMenus = <String>[];
-      if (type != 'breakfast') {
-        excludeMenus.addAll(_dayMeal.breakfast.map((m) => m.name));
-      }
-      if (type != 'lunch') {
-        excludeMenus.addAll(_dayMeal.lunch.map((m) => m.name));
-      }
-      if (type != 'dinner') {
-        excludeMenus.addAll(_dayMeal.dinner.map((m) => m.name));
-      }
-
-      final items = await ApiService.recommendMeal(
-        mealType: type,
-        prefs: _prefs,
-        excludeMenus: excludeMenus,
-      );
-      switch (type) {
-        case 'breakfast':
-          _dayMeal.breakfast = items;
-          break;
-        case 'lunch':
-          _dayMeal.lunch = items;
-          break;
-        case 'dinner':
-          _dayMeal.dinner = items;
-          break;
-      }
+      final result = await ApiService.recommendDay(prefs: _prefs);
+      _dayMeal.breakfast = result['breakfast'] ?? _dayMeal.breakfast;
+      _dayMeal.lunch     = result['lunch']     ?? _dayMeal.lunch;
+      _dayMeal.dinner    = result['dinner']    ?? _dayMeal.dinner;
       success = true;
     } catch (e) {
       debugPrint('식단 추천 오류: $e');
       _lastError = e.toString();
     }
-    _setLoading(type, false);
+
+    _loadingBreakfast = false;
+    _loadingLunch = false;
+    _loadingDinner = false;
+    notifyListeners();
     return success;
   }
 
