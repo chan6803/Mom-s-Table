@@ -8,9 +8,9 @@ class ShopScreen extends StatelessWidget {
 
   static const _stores = [
     {'name': '쿠팡', 'icon': '🛒', 'desc': '로켓배송 · 새벽배송', 'url': 'https://www.coupang.com/np/search?q='},
+    {'name': '마켓컬리', 'icon': '🥬', 'desc': '새벽배송 신선식품', 'url': 'https://www.kurly.com/search?sword='},
     {'name': '홈플러스', 'icon': '🏪', 'desc': '온라인 마트', 'url': 'https://www.homeplus.co.kr/search?q='},
     {'name': '이마트몰', 'icon': '🏬', 'desc': 'SSG 통합 쇼핑', 'url': 'https://www.emart.com/search/get?keyword='},
-    {'name': '마켓컬리', 'icon': '🥬', 'desc': '새벽배송 신선식품', 'url': 'https://www.kurly.com/search?sword='},
     {'name': '롯데온', 'icon': '🏪', 'desc': '롯데마트몰', 'url': 'https://www.lotteon.com/p/search?keyword='},
     {'name': 'G마켓', 'icon': '🛍️', 'desc': '슈퍼딜 · 할인', 'url': 'https://browse.gmarket.co.kr/search?keyword='},
   ];
@@ -144,20 +144,31 @@ class _IngredientRow extends StatelessWidget {
           InkWell(
             onTap: () => onLaunch('https://www.coupang.com/np/search?q=$q'),
             borderRadius: BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: const Text('쿠팡',
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+              child: Text('쿠팡',
                 style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
                   decoration: TextDecoration.underline)),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
+          InkWell(
+            onTap: () => onLaunch('https://www.kurly.com/search?sword=$q'),
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+              child: Text('컬리',
+                style: TextStyle(fontSize: 11, color: Color(0xFF6B3FA0),
+                  decoration: TextDecoration.underline)),
+            ),
+          ),
+          const SizedBox(width: 2),
           InkWell(
             onTap: () => onLaunch('https://www.homeplus.co.kr/search?q=$q'),
             borderRadius: BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: const Text('홈플러스',
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+              child: Text('홈플러스',
                 style: TextStyle(fontSize: 11, color: Color(0xFF185FA5),
                   decoration: TextDecoration.underline)),
             ),
