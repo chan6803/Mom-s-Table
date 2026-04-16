@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/meal_model.dart';
 import '../models/preferences_model.dart';
-import '../services/api_service.dart';
 import '../services/default_meal_data.dart';
 
 class MealProvider extends ChangeNotifier {
@@ -82,41 +81,11 @@ class MealProvider extends ChangeNotifier {
   }
 
   // 클릭한 끼니 하나만 새로 추천
-  // 앱 시작 시와 동일한 로컬 랜덤 풀에서 즉시 조합 (서버 불필요)
-  // 백그라운드로 AI 서버도 시도 → 성공 시 더 나은 추천으로 업데이트
+  // 앱 시작 시와 완전히 동일한 방식: 로컬 랜덤 풀에서 즉시 조합
+  // 칼로리 신뢰성을 위해 서버 데이터를 사용하지 않음
   Future<bool> refreshMeal(String type) async {
-    // 즉시 로컬 랜덤 메뉴 표시 (서버 응답 기다리지 않음)
     _setMealItems(type, DefaultMealData.randomMeal(type));
-
-    // 백그라운드에서 AI 서버 추천 시도 (성공 시 화면 업데이트)
-    _tryAiRecommend(type);
-
     return true;
-  }
-
-  Future<void> _tryAiRecommend(String type) async {
-    try {
-      final excludeMenus = <String>[];
-      if (type != 'breakfast') {
-        excludeMenus.addAll(_dayMeal.breakfast.map((m) => m.name));
-      }
-      if (type != 'lunch') {
-        excludeMenus.addAll(_dayMeal.lunch.map((m) => m.name));
-      }
-      if (type != 'dinner') {
-        excludeMenus.addAll(_dayMeal.dinner.map((m) => m.name));
-      }
-
-      final items = await ApiService.recommendMeal(
-        mealType: type,
-        prefs: _prefs,
-        excludeMenus: excludeMenus,
-      );
-      // AI 추천 성공 시 로컬 랜덤을 AI 결과로 교체
-      _setMealItems(type, items);
-    } catch (_) {
-      // AI 서버 실패 시 이미 표시된 로컬 랜덤 유지 (아무것도 안 함)
-    }
   }
 
   void _setMealItems(String type, List<MealItem> items) {
