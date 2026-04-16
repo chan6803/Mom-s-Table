@@ -89,51 +89,69 @@ app.post('/api/recommend', async (req, res) => {
 
   const label = mealType === 'breakfast' ? '아침' : mealType === 'lunch' ? '점심' : '저녁';
 
-  // 매번 다른 메뉴가 나오도록 랜덤 키워드 삽입
-  const breakfastVariety = [
-    '달걀말이와 북어국', '잡곡밥과 순두부찌개', '볶음밥과 콩나물국',
-    '토스트와 미소국', '오트밀죽과 나물', '현미밥과 된장국',
-    '계란덮밥과 맑은국', '비빔밥과 미역국', '국수와 달걀국',
-  ];
-  const lunchVariety = [
-    '제육볶음과 된장찌개', '불고기와 시금치국', '닭볶음탕과 오이무침',
-    '순두부찌개와 잡채', '김치볶음밥과 계란국', '비빔밥과 북어국',
-    '갈비탕과 깍두기', '된장찌개와 고등어구이', '물냉면과 보쌈',
-    '짜글이와 잡곡밥', '닭갈비와 콩나물국', '갈치조림과 뭇국',
-  ];
-  const dinnerVariety = [
-    '삼겹살구이와 된장찌개', '낙지볶음과 맑은국', '갈비찜과 시래기국',
-    '생선구이와 콩나물국', '소불고기와 두부찌개', '닭백숙과 깍두기',
-    '오삼불고기와 미역국', '청국장과 고등어구이', '수육과 돼지국밥',
-    '해물순두부와 잡곡밥', '제육덮밥과 북어국', '삼치구이와 된장국',
-  ];
-  const varietyPool = mealType === 'breakfast' ? breakfastVariety
-    : mealType === 'lunch' ? lunchVariety : dinnerVariety;
-  const randomHint = varietyPool[Math.floor(Math.random() * varietyPool.length)];
+  // ── 메뉴 풀: 끼니별 주요 메뉴 후보 (랜덤으로 1개 반드시 포함) ──
+  const breakfastMains  = ['잡곡밥','현미밥','보리밥','흰쌀밥','죽','볶음밥','국수','달걀덮밥','두부밥'];
+  const breakfastSoups  = ['된장국','순두부찌개','북어국','콩나물국','시래기된장국','미소국','달걀국','해장국'];
+  const breakfastSides  = ['달걀말이','계란후라이','멸치볶음','김구이','깍두기','총각김치','나물무침','어묵볶음','감자조림','두부구이'];
+
+  const lunchMains      = ['잡곡밥','현미밥','비빔밥','볶음밥','냉면','국수','칼국수','덮밥','잡채밥'];
+  const lunchSoups      = ['김치찌개','된장찌개','순두부찌개','부대찌개','갈비탕','설렁탕','육개장','북어국','콩나물국'];
+  const lunchSides      = ['제육볶음','불고기','닭갈비','고등어구이','오징어볶음','두부조림','감자조림','나물무침','깍두기','배추김치','잡채'];
+
+  const dinnerMains     = ['잡곡밥','현미밥','보리밥','흰쌀밥','비빔밥','솥밥','영양밥'];
+  const dinnerSoups     = ['미역국','된장찌개','순두부찌개','청국장','갈비탕','감자탕','동태찌개','시래기국','콩나물국'];
+  const dinnerSides     = ['삼겹살구이','닭볶음탕','갈비찜','낙지볶음','오삼불고기','고등어조림','삼치구이','소불고기','두부구이','계란찜','나물무침','도라지무침'];
+
+  function pick(arr, exclude = []) {
+    const filtered = arr.filter(x => !exclude.includes(x));
+    return filtered.length > 0
+      ? filtered[Math.floor(Math.random() * filtered.length)]
+      : arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  const allExclude = [...excludeMenus, ...dislikedMenus];
+  let forcedMain, forcedSoup, forcedSide1, forcedSide2;
+
+  if (mealType === 'breakfast') {
+    forcedMain  = pick(breakfastMains,  allExclude);
+    forcedSoup  = pick(breakfastSoups,  allExclude);
+    forcedSide1 = pick(breakfastSides,  [...allExclude, forcedMain, forcedSoup]);
+    forcedSide2 = pick(breakfastSides,  [...allExclude, forcedMain, forcedSoup, forcedSide1]);
+  } else if (mealType === 'lunch') {
+    forcedMain  = pick(lunchMains,  allExclude);
+    forcedSoup  = pick(lunchSoups,  allExclude);
+    forcedSide1 = pick(lunchSides,  [...allExclude, forcedMain, forcedSoup]);
+    forcedSide2 = pick(lunchSides,  [...allExclude, forcedMain, forcedSoup, forcedSide1]);
+  } else {
+    forcedMain  = pick(dinnerMains,  allExclude);
+    forcedSoup  = pick(dinnerSoups,  allExclude);
+    forcedSide1 = pick(dinnerSides,  [...allExclude, forcedMain, forcedSoup]);
+    forcedSide2 = pick(dinnerSides,  [...allExclude, forcedMain, forcedSoup, forcedSide1]);
+  }
+
+  // 랜덤 세션 ID로 AI가 매번 다르게 생성하도록 유도
+  const sessionId = Math.floor(Math.random() * 99999);
 
   const disStr = dislikedMenus.length > 0
-    ? '⛔ 다음 메뉴는 무조건 제외(이유 불문): ' + dislikedMenus.join(', ') + '.'
-    : '';
-  const likeStr = likedMenus.length > 0
-    ? '✅ 선호 스타일 반영: ' + likedMenus.join(', ') + '.'
+    ? '⛔ 절대 제외 메뉴: ' + dislikedMenus.join(', ') + '\n'
     : '';
   const exclStr = excludeMenus.length > 0
-    ? '🚫 오늘 다른 끼니에 이미 나온 메뉴라 절대 중복 불가: ' + excludeMenus.join(', ') + '.'
+    ? '🚫 다른 끼니 중복 금지: ' + excludeMenus.join(', ') + '\n'
     : '';
 
-  const prompt = '당신은 매일 다양한 한국 가정식을 추천하는 영양사입니다.\n'
-    + '오늘 ' + label + ' 식단을 추천해 주세요.\n\n'
-    + (disStr ? disStr + '\n' : '')
-    + (likeStr ? likeStr + '\n' : '')
-    + (exclStr ? exclStr + '\n' : '')
-    + '오늘의 추천 힌트: ' + randomHint + ' 스타일 참고 (비슷하거나 다른 메뉴도 가능)\n\n'
-    + '규칙:\n'
-    + '1. 주식(밥/죽/면) 1개 + 국/찌개 1개 + 반찬 3개 이상\n'
-    + '2. 위의 제외 목록 메뉴는 절대 포함하지 마세요\n'
-    + '3. 공깃밥+미역국+두부조림+콩나물무침+시금치나물 조합은 절대 금지\n'
-    + '4. 매번 신선하고 다양한 조합을 추천하세요\n\n'
-    + '반드시 JSON 배열만 출력하고 설명은 쓰지 마세요:\n'
-    + '[{"name":"메뉴명","type":"주식또는국또는찌개또는반찬또는분식","kcal":숫자,"dot":"dot-main또는dot-soup또는dot-side또는dot-noodle","ingredients":["재료1 양"],"steps":["조리법1","조리법2"]}]';
+  const prompt =
+    '[추천 세션 #' + sessionId + ']\n'
+    + '당신은 한국 가정식 영양사입니다. 오늘 ' + label + ' 식단을 추천하세요.\n\n'
+    + disStr
+    + exclStr
+    + '★ 반드시 포함할 메뉴:\n'
+    + '  - 주식: ' + forcedMain + '\n'
+    + '  - 국/찌개: ' + forcedSoup + '\n'
+    + '  - 반찬에 반드시 포함: ' + forcedSide1 + ', ' + forcedSide2 + '\n\n'
+    + '추가로 반찬 1~2개를 자유롭게 선택해서 총 5개 메뉴를 완성하세요.\n'
+    + '(위 ★ 메뉴가 기피 목록에 있으면 비슷한 다른 메뉴로 대체)\n\n'
+    + '반드시 JSON 배열만 출력 (설명 없이):\n'
+    + '[{"name":"메뉴명","type":"주식또는국또는찌개또는반찬","kcal":숫자,"dot":"dot-main또는dot-soup또는dot-side","ingredients":["재료1 양"],"steps":["조리법1"]}]';
 
   try {
     const text = await callAI({
