@@ -82,14 +82,20 @@ class MealProvider extends ChangeNotifier {
   }
 
   // 클릭한 끼니 하나만 새로 추천
-  // 다른 끼니 메뉴는 excludeMenus로 전달해 중복 방지
-  // 서버 실패 시 로컬 랜덤 데이터로 즉시 대체
+  // 앱 시작 시와 동일한 로컬 랜덤 풀에서 즉시 조합 (서버 불필요)
+  // 백그라운드로 AI 서버도 시도 → 성공 시 더 나은 추천으로 업데이트
   Future<bool> refreshMeal(String type) async {
-    _lastError = null;
-    _setLoading(type, true);
+    // 즉시 로컬 랜덤 메뉴 표시 (서버 응답 기다리지 않음)
+    _setMealItems(type, DefaultMealData.randomMeal(type));
 
+    // 백그라운드에서 AI 서버 추천 시도 (성공 시 화면 업데이트)
+    _tryAiRecommend(type);
+
+    return true;
+  }
+
+  Future<void> _tryAiRecommend(String type) async {
     try {
-      // 다른 끼니에 이미 나온 메뉴는 제외 목록에 추가
       final excludeMenus = <String>[];
       if (type != 'breakfast') {
         excludeMenus.addAll(_dayMeal.breakfast.map((m) => m.name));
@@ -106,16 +112,10 @@ class MealProvider extends ChangeNotifier {
         prefs: _prefs,
         excludeMenus: excludeMenus,
       );
+      // AI 추천 성공 시 로컬 랜덤을 AI 결과로 교체
       _setMealItems(type, items);
-      _setLoading(type, false);
-      return true;
-    } catch (e) {
-      debugPrint('식단 추천 오류: $e');
-      _lastError = e.toString();
-      // 서버 실패 시 로컬 랜덤 데이터로 대체 (화면은 항상 새 메뉴 표시)
-      _setMealItems(type, DefaultMealData.randomMeal(type));
-      _setLoading(type, false);
-      return false;
+    } catch (_) {
+      // AI 서버 실패 시 이미 표시된 로컬 랜덤 유지 (아무것도 안 함)
     }
   }
 
