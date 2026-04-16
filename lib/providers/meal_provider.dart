@@ -81,68 +81,57 @@ class MealProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 아침→점심→저녁 순서로 순차 호출, 앞 끼니 메뉴를 다음 끼니에서 제외
-  // 서버의 기존 /api/recommend 엔드포인트를 그대로 활용 (안정적)
+  // 클릭한 끼니 하나만 새로 추천
+  // 다른 끼니 메뉴는 excludeMenus로 전달해 중복 방지
+  // 서버 실패 시 로컬 랜덤 데이터로 즉시 대체
   Future<bool> refreshMeal(String type) async {
     _lastError = null;
-    bool success = false;
+    _setLoading(type, true);
 
     try {
-      // ── Step 1: 아침 추천 ──────────────────────────
-      _loadingBreakfast = true;
-      notifyListeners();
+      // 다른 끼니에 이미 나온 메뉴는 제외 목록에 추가
+      final excludeMenus = <String>[];
+      if (type != 'breakfast') {
+        excludeMenus.addAll(_dayMeal.breakfast.map((m) => m.name));
+      }
+      if (type != 'lunch') {
+        excludeMenus.addAll(_dayMeal.lunch.map((m) => m.name));
+      }
+      if (type != 'dinner') {
+        excludeMenus.addAll(_dayMeal.dinner.map((m) => m.name));
+      }
 
-      final breakfastItems = await ApiService.recommendMeal(
-        mealType: 'breakfast',
+      final items = await ApiService.recommendMeal(
+        mealType: type,
         prefs: _prefs,
-        excludeMenus: [],
+        excludeMenus: excludeMenus,
       );
-      _dayMeal.breakfast = breakfastItems;
-      _loadingBreakfast = false;
-      notifyListeners();
-
-      // ── Step 2: 점심 추천 (아침 메뉴 제외) ───────────
-      _loadingLunch = true;
-      notifyListeners();
-
-      final excludeForLunch = breakfastItems.map((m) => m.name).toList();
-      final lunchItems = await ApiService.recommendMeal(
-        mealType: 'lunch',
-        prefs: _prefs,
-        excludeMenus: excludeForLunch,
-      );
-      _dayMeal.lunch = lunchItems;
-      _loadingLunch = false;
-      notifyListeners();
-
-      // ── Step 3: 저녁 추천 (아침+점심 메뉴 제외) ──────
-      _loadingDinner = true;
-      notifyListeners();
-
-      final excludeForDinner = [
-        ...breakfastItems.map((m) => m.name),
-        ...lunchItems.map((m) => m.name),
-      ];
-      final dinnerItems = await ApiService.recommendMeal(
-        mealType: 'dinner',
-        prefs: _prefs,
-        excludeMenus: excludeForDinner,
-      );
-      _dayMeal.dinner = dinnerItems;
-      _loadingDinner = false;
-      notifyListeners();
-
-      success = true;
+      _setMealItems(type, items);
+      _setLoading(type, false);
+      return true;
     } catch (e) {
       debugPrint('식단 추천 오류: $e');
       _lastError = e.toString();
-      _loadingBreakfast = false;
-      _loadingLunch = false;
-      _loadingDinner = false;
-      notifyListeners();
+      // 서버 실패 시 로컬 랜덤 데이터로 대체 (화면은 항상 새 메뉴 표시)
+      _setMealItems(type, DefaultMealData.randomMeal(type));
+      _setLoading(type, false);
+      return false;
     }
+  }
 
-    return success;
+  void _setMealItems(String type, List<MealItem> items) {
+    switch (type) {
+      case 'breakfast':
+        _dayMeal.breakfast = items;
+        break;
+      case 'lunch':
+        _dayMeal.lunch = items;
+        break;
+      case 'dinner':
+        _dayMeal.dinner = items;
+        break;
+    }
+    notifyListeners();
   }
 
   void recordPick(String name) {
